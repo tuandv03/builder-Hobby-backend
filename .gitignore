@@ -86,3 +86,5 @@ bld/
 
 # Others
 *.log
+/WebAPI/wwwroot/Images/*
+!/WebAPI/wwwroot/Images/.gitkeep

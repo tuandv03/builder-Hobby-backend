@@ -4,8 +4,6 @@ using Domain.Interfaces;
 
 namespace Application.Cards.Queries;
 
-public record GetCardByIdQuery(int Id) : IRequest<Card>;
-
 public class GetCardByIdHandler : IRequestHandler<GetCardByIdQuery, Card>
 {
 	private readonly ICardRepository _repo;
@@ -14,7 +12,12 @@ public class GetCardByIdHandler : IRequestHandler<GetCardByIdQuery, Card>
 	public async Task<Card> Handle(GetCardByIdQuery request, CancellationToken ct)
 	{
 		var card = await _repo.GetByIdAsync(request.Id);
-		if (card is null) throw new KeyNotFoundException($"Card {request.Id} not found");
-		return card;
+		return card is null ? throw new KeyNotFoundException($"Card {request.Id} not found") : card;
+	}
+
+	public async Task<Card> Handle(GetCardDetailByIdQuery request, CancellationToken ct)
+	{
+		var card = await _repo.GetCardDetailByIdAsync(request.Id);
+		return card is null ? throw new KeyNotFoundException($"Card {request.Id} not found") : card;
 	}
 }

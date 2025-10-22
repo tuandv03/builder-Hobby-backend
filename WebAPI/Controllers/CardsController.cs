@@ -12,6 +12,13 @@ public class CardsController : ControllerBase
 	private readonly IMediator _mediator;
 	public CardsController(IMediator mediator) => _mediator = mediator;
 
+	[HttpGet()]
+	public async Task<ActionResult<Card[]>> GetCardList(int id)
+	{
+		var card = await _mediator.Send(new GetCardByIdQuery(id));
+		return Ok(card);
+	}
+
 	[HttpGet("{id:int}")]
 	public async Task<ActionResult<Card>> GetById(int id)
 	{

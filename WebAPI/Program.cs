@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using MediatR;
-using Application;
+﻿using Application;
+using Domain.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Repositories;
-using Domain.Interfaces;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,16 @@ builder.Services.AddSwaggerGen(c =>
 	});
 });
 
+// Add CORS configuration BEFORE app.Build()
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowAll",
+		policy => policy
+			.AllowAnyOrigin()
+			.AllowAnyMethod()
+			.AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 // ------------------ Middleware ------------------
@@ -52,7 +63,18 @@ if (app.Environment.IsDevelopment())
 	});
 }
 
+app.UseCors("AllowAll"); // Add this line to use the CORS policy
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+// bật serve file tĩnh
+app.UseStaticFiles();
+
+// nếu muốn custom cache/đường dẫn
+app.UseStaticFiles(new StaticFileOptions
+{
+	FileProvider = new PhysicalFileProvider(
+		Path.Combine(builder.Environment.ContentRootPath, "WebAPI", "wwwroot", "Images")),
+	RequestPath = "/images"
+});
 app.Run();

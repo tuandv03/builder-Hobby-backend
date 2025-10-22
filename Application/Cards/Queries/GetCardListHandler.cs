@@ -27,7 +27,7 @@ namespace Application.Cards.Queries
 				PriceMax = request.PriceMax
 			};
 			var card = await _repo.GetCardList(CardListQuery);
-			return card is null ? throw new KeyNotFoundException($"Card not found") : card;
+			return card is null ? throw new KeyNotFoundException($"Card not found") : card.ToArray();
 		}
 
 		public async Task<Card> Handle(GetCardDetailByIdQuery request, CancellationToken ct)

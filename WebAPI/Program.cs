@@ -23,6 +23,7 @@ builder.Services.AddMediatR(cfg =>
 
 // Repository DI
 builder.Services.AddScoped<ICardRepository, CardRepository>();
+builder.Services.AddScoped<ICardInventoryRepository, CardInventoryRepository>();
 
 // Controllers
 builder.Services.AddControllers();

@@ -34,4 +34,8 @@ public partial class Card
     public virtual ICollection<Cardimage> Cardimages { get; set; } = new List<Cardimage>();
 
     public virtual ICollection<Cardset> Cardsets { get; set; } = new List<Cardset>();
+	public string Rarity { get; set; }
+	public string SetCode { get; set; }
+	public string SetName { get; set; }
+	public decimal? Price { get; set; }
 }

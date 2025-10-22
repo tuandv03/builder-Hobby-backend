@@ -17,7 +17,7 @@ public class CardRepository : ICardRepository
 		return await _db.Cards.FirstOrDefaultAsync(x => x.Id == id);
 	}
 
-	public async Task<Card> GetCardDetailByIdAsync(int id)
+	public async Task<Card?> GetCardDetailByIdAsync(int id)
 	{
 		string sqlQuery = @"WITH img AS (
                 SELECT
@@ -65,7 +65,9 @@ public class CardRepository : ICardRepository
               LEFT JOIN img ON img.card_id = c.id
               LEFT JOIN sets ON sets.card_id = c.id
               WHERE c.id = " + id.ToString() + "; ";
-		return await _db.Cards.FromSqlRaw(sqlQuery).ToListAsync();
+
+		var result = await _db.Cards.FromSqlRaw(sqlQuery).ToListAsync();
+		return result.FirstOrDefault();
 	}
 	public async Task<List<Card>> GetAllAsync() =>
 		await _db.Cards.ToListAsync();
@@ -95,7 +97,7 @@ public class CardRepository : ICardRepository
 		if (request.PriceMax.HasValue)
 			query = query.Where(c => c.Price <= request.PriceMax.Value);
 
-		return await query.ToListAsync(ct);
+		return await query.ToListAsync();
 	}
 	public async Task AddAsync(Card card)
 	{

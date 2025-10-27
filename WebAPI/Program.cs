@@ -21,6 +21,9 @@ builder.Services.AddMediatR(cfg =>
 	cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 });
 
+// AutoMapper configuration
+builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker));
+
 // Repository DI
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<ICardInventoryRepository, CardInventoryRepository>();
@@ -72,10 +75,20 @@ app.MapControllers();
 app.UseStaticFiles();
 
 // nếu muốn custom cache/đường dẫn
-app.UseStaticFiles(new StaticFileOptions
+//app.UseStaticFiles(new StaticFileOptions
+//{
+//	FileProvider = new PhysicalFileProvider(
+//		Path.Combine(builder.Environment.ContentRootPath, "WebAPI", "wwwroot", "Images")),
+//	RequestPath = "/Images"
+//});
+
+if (Directory.Exists(Path.Combine(builder.Environment.WebRootPath, "Images")))
 {
-	FileProvider = new PhysicalFileProvider(
-		Path.Combine(builder.Environment.ContentRootPath, "WebAPI", "wwwroot", "Images")),
-	RequestPath = "/images"
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.WebRootPath, "Images")),
+        RequestPath = "/Images"
+    });
+}
+
 app.Run();

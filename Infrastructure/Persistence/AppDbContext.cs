@@ -20,8 +20,12 @@ public partial class AppDbContext : DbContext
 	public virtual DbSet<Orderdetail> Orderdetails { get; set; }
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-		=> optionsBuilder.UseNpgsql("Host=localhost;Database=yugiohDb;Username=postgres;Password=1");
+	{
+		if (!optionsBuilder.IsConfigured)
+		{
+			optionsBuilder.UseSqlServer("Server=localhost;Database=Yugioh;User Id=sa;Password=Lamcha@123;TrustServerCertificate=True;");
+		}
+	}
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
@@ -32,6 +36,7 @@ public partial class AppDbContext : DbContext
 			entity.ToTable("cards");
 
 			entity.Property(e => e.Id)
+				.HasConversion<int>()
 				.ValueGeneratedNever()
 				.HasColumnName("id");
 			entity.Property(e => e.Archetype)
@@ -46,9 +51,6 @@ public partial class AppDbContext : DbContext
 			entity.Property(e => e.FrameType)
 				.HasMaxLength(50)
 				.HasColumnName("frame_type");
-			entity.Property(e => e.HumanReadableType)
-				.HasMaxLength(100)
-				.HasColumnName("human_readable_type");
 			entity.Property(e => e.Level).HasColumnName("level");
 			entity.Property(e => e.Name)
 				.HasMaxLength(255)
@@ -60,20 +62,25 @@ public partial class AppDbContext : DbContext
 				.HasMaxLength(100)
 				.HasColumnName("type");
 			entity.Property(e => e.YgoprodeckUrl).HasColumnName("ygoprodeck_url");
+			entity.Ignore(e => e.HumanReadableType);
+			entity.Ignore(e => e.Rarity);
+			entity.Ignore(e => e.SetCode);
+			entity.Ignore(e => e.SetName);
+			entity.Ignore(e => e.Price);
 		});
 
 		modelBuilder.Entity<Cardimage>(entity =>
 		{
 			entity.HasKey(e => e.Id).HasName("cardimages_pkey");
 
-			entity.ToTable("cardimages");
+			entity.ToTable("card_images");
 
 			entity.HasIndex(e => e.CardId, "idx_cardimages_card_id");
 
-			entity.Property(e => e.Id).HasColumnName("id");
-			entity.Property(e => e.CardId).HasColumnName("card_id");
+			entity.Property(e => e.Id).HasConversion<int>().HasColumnName("id");
+			entity.Property(e => e.CardId).HasConversion<int>().HasColumnName("card_id");
 			entity.Property(e => e.ImageId)
-				.HasMaxLength(50)
+				.HasConversion<int>()
 				.HasColumnName("image_id");
 			entity.Property(e => e.ImageUrl).HasColumnName("image_url");
 			entity.Property(e => e.ImageUrlCropped).HasColumnName("image_url_cropped");
@@ -103,7 +110,7 @@ public partial class AppDbContext : DbContext
 				.HasColumnName("sell_price");
 			entity.Property(e => e.UpdatedAt)
 				.HasDefaultValueSql("CURRENT_TIMESTAMP")
-				.HasColumnType("timestamp without time zone")
+				.HasColumnType("datetime2")
 				.HasColumnName("updated_at");
 
 			entity.HasOne(d => d.Cardset).WithMany(p => p.Cardinventories)
@@ -116,16 +123,10 @@ public partial class AppDbContext : DbContext
 		{
 			entity.HasKey(e => e.Id).HasName("cardsets_pkey");
 
-			entity.ToTable("cardsets");
+			entity.ToTable("card_sets");
 
-			entity.Property(e => e.Id).HasColumnName("id");
-			entity.Property(e => e.CardCode)
-				.HasMaxLength(100)
-				.HasColumnName("card_code");
-			entity.Property(e => e.CardId).HasColumnName("card_id");
-			entity.Property(e => e.CardName)
-				.HasMaxLength(100)
-				.HasColumnName("card_name");
+			entity.Property(e => e.Id).HasConversion<int>().HasColumnName("id");
+			entity.Property(e => e.CardId).HasConversion<int>().HasColumnName("card_id");
 			entity.Property(e => e.SetCode)
 				.HasMaxLength(50)
 				.HasColumnName("set_code");
@@ -141,6 +142,8 @@ public partial class AppDbContext : DbContext
 			entity.Property(e => e.SetRarityCode)
 				.HasMaxLength(20)
 				.HasColumnName("set_rarity_code");
+			entity.Ignore(e => e.CardName);
+			entity.Ignore(e => e.CardCode);
 
 			entity.HasOne(d => d.Card).WithMany(p => p.Cardsets)
 				.HasForeignKey(d => d.CardId)
@@ -163,11 +166,11 @@ public partial class AppDbContext : DbContext
 				.HasColumnName("customer_phone");
 			entity.Property(e => e.OrderDate)
 				.HasDefaultValueSql("CURRENT_TIMESTAMP")
-				.HasColumnType("timestamp without time zone")
+				.HasColumnType("datetime2")
 				.HasColumnName("order_date");
 			entity.Property(e => e.Status)
 				.HasMaxLength(50)
-				.HasDefaultValueSql("'PENDING'::character varying")
+				.HasDefaultValueSql("'PENDING'")
 				.HasColumnName("status");
 		});
 
@@ -184,7 +187,7 @@ public partial class AppDbContext : DbContext
 			entity.Property(e => e.Quantity).HasColumnName("quantity");
 			entity.Property(e => e.Subtotal)
 				.HasPrecision(10, 2)
-				.HasComputedColumnSql("((quantity)::numeric * unit_price)", true)
+				.HasComputedColumnSql("[quantity] * [unit_price]", true)
 				.HasColumnName("subtotal");
 			entity.Property(e => e.UnitPrice)
 				.HasPrecision(10, 2)

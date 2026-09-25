@@ -1,14 +1,15 @@
-﻿using Domain.Entities;
+using Application.Cards.DTOs;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Application.Cards.Queries
-{
-	public record GetCardListQuery(string CardName, string Rarity
-		, string SetCode, string SetName,string Type
-		, decimal PriceMin, decimal PriceMax) : IRequest<Card[]>;
-}
+namespace Application.Cards.Queries;
+
+public record GetCardListQuery(
+	string? CardName,
+	string? Rarity,
+	string? SetCode,
+	string? SetName,
+	string? Type,
+	decimal? PriceMin,
+	decimal? PriceMax,
+	int Page = 1,
+	int PageSize = 12) : IRequest<CardListResponseDto>;

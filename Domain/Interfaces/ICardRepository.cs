@@ -13,7 +13,9 @@ namespace Domain.Interfaces
 		Task<Card?> GetByIdAsync(int id);
 		Task<Card?> GetCardDetailByIdAsync(int id);
 		Task<List<Card>> GetAllAsync();
-		Task<List<Card>> GetCardList(CardListQuery query);
+		Task<(List<Card> Items, int Total, string? SuggestedName)> GetCardList(
+			CardListQuery query,
+			CancellationToken cancellationToken = default);
 		Task AddAsync(Card card);
 	}
 }

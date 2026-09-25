@@ -4,6 +4,7 @@ using Domain.QueryModels;
 using Infrastructure.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Infrastructure.Search;
 
 namespace Infrastructure.Repositories;
 
@@ -72,32 +73,60 @@ public class CardRepository : ICardRepository
 	public async Task<List<Card>> GetAllAsync() =>
 		await _db.Cards.ToListAsync();
 
-	public async Task<List<Card>> GetCardList(CardListQuery request)
+	public async Task<(List<Card> Items, int Total, string? SuggestedName)> GetCardList(
+		CardListQuery request,
+		CancellationToken cancellationToken = default)
 	{
-		var query = _db.Cards.Include(c=>c.Cardsets).AsQueryable();
-
-		if (!string.IsNullOrEmpty(request.CardName))
-			query = query.Where(c => c.Name.Contains(request.CardName));
+		var baseQuery = _db.Cards.AsNoTracking().AsQueryable();
 
 		if (!string.IsNullOrEmpty(request.Rarity))
-			query = query.Where(c => c.Rarity == request.Rarity);
+			baseQuery = baseQuery.Where(c => c.Cardsets.Any(set => set.SetRarity == request.Rarity));
 
 		if (!string.IsNullOrEmpty(request.SetCode))
-			query = query.Where(c => c.SetCode == request.SetCode);
+			baseQuery = baseQuery.Where(c => c.Cardsets.Any(set => set.SetCode == request.SetCode));
 
 		if (!string.IsNullOrEmpty(request.SetName))
-			query = query.Where(c => c.SetName.Contains(request.SetName));
+			baseQuery = baseQuery.Where(c => c.Cardsets.Any(set =>
+				set.SetName != null && set.SetName.Contains(request.SetName)));
 
 		if (!string.IsNullOrEmpty(request.Type))
-			query = query.Where(c => c.Type == request.Type);
+			baseQuery = baseQuery.Where(c => c.Type == request.Type);
 
 		if (request.PriceMin.HasValue)
-			query = query.Where(c => c.Price >= request.PriceMin.Value);
+			baseQuery = baseQuery.Where(c => c.Cardsets.Any(set => set.SetPrice >= request.PriceMin.Value));
 
 		if (request.PriceMax.HasValue)
-			query = query.Where(c => c.Price <= request.PriceMax.Value);
+			baseQuery = baseQuery.Where(c => c.Cardsets.Any(set => set.SetPrice <= request.PriceMax.Value));
 
-		return await query.ToListAsync();
+		var query = baseQuery;
+		string? suggestedName = null;
+		if (!string.IsNullOrWhiteSpace(request.CardName))
+		{
+			query = query.Where(card => card.Name.Contains(request.CardName));
+			if (request.CardName.Trim().Length >= 2 && !await query.AnyAsync(cancellationToken))
+			{
+				var candidateNames = await baseQuery
+					.Select(card => card.Name)
+					.ToListAsync(cancellationToken);
+
+				suggestedName = CardNameMatcher.FindClosest(request.CardName, candidateNames);
+				query = suggestedName is null
+					? query
+					: baseQuery.Where(card => card.Name == suggestedName);
+			}
+		}
+
+		var total = await query.CountAsync(cancellationToken);
+		var items = await query
+			.OrderBy(card => card.Name)
+			.Skip((request.Page - 1) * request.PageSize)
+			.Take(request.PageSize)
+			.Include(card => card.Cardimages)
+			.Include(card => card.Cardsets)
+			.AsSplitQuery()
+			.ToListAsync(cancellationToken);
+
+		return (items, total, suggestedName);
 	}
 	public async Task AddAsync(Card card)
 	{

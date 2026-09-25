@@ -11,9 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ------------------ Services ------------------
 
-// PostgreSQL DbContext (connection string trong appsettings.json)
+// SQL Server DbContext (connection string trong appsettings.json)
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // MediatR v12 (scan Application layer)
 builder.Services.AddMediatR(cfg =>

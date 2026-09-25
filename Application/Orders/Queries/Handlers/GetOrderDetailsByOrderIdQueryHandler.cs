@@ -1,25 +1,20 @@
 using MediatR;
 using Domain.Entities;
-using Application.Common.Interfaces; // Adjust based on your interfaces location
+using Domain.Interfaces;
 
 namespace Application.Orders.Queries.Handlers;
 
-public class GetOrderDetailsByOrderIdQueryHandler : IRequestHandler<GetOrderDetailsByOrderIdQuery, Orderdetail[]>
+public class GetOrderDetailsByOrderIdQueryHandler : IRequestHandler<GetOrderDetailsByOrderIdQuery, List<Orderdetail>>
 {
-    private readonly IRepository<Orderdetail> _orderDetailRepository;
+    private readonly IOrderDetailRepository _orderDetailRepository;
 
-    public GetOrderDetailsByOrderIdQueryHandler(IRepository<Orderdetail> orderDetailRepository)
+    public GetOrderDetailsByOrderIdQueryHandler(IOrderDetailRepository orderDetailRepository)
     {
         _orderDetailRepository = orderDetailRepository;
     }
 
-    public async Task<Orderdetail[]> Handle(GetOrderDetailsByOrderIdQuery request, CancellationToken cancellationToken)
+    public async Task<List<Orderdetail>> Handle(GetOrderDetailsByOrderIdQuery request, CancellationToken cancellationToken)
     {
-        return await _orderDetailRepository
-            .GetAllAsync(
-                filter: od => od.OrderId == request.OrderId,
-                includes: new[] { "Cardset", "Inventory", "Order" },
-                cancellationToken: cancellationToken
-            );
+        return await _orderDetailRepository.GetByOrderIdAsync(request.OrderId);
     }
 }

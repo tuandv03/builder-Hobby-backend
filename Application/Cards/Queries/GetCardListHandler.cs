@@ -32,11 +32,15 @@ public class GetCardListHandler : IRequestHandler<GetCardListQuery, CardListResp
 			var firstSet = card.Cardsets.OrderBy(set => set.Id).FirstOrDefault();
 			var firstImage = card.Cardimages.OrderBy(image => image.Id).FirstOrDefault();
 
+			var localImageUrl = string.IsNullOrWhiteSpace(firstImage?.ImageId)
+				? null
+				: $"/card_images/{firstImage.ImageId}.jpg";
+
 			return new CardListItemDto(
 				card.Id,
 				card.Name,
 				card.Type,
-				firstImage?.ImageUrlSmall ?? firstImage?.ImageUrl,
+				localImageUrl,
 				firstSet?.SetRarity,
 				firstSet?.SetPrice);
 		}).ToArray();

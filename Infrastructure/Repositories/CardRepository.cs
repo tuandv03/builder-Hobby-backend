@@ -15,7 +15,10 @@ public class CardRepository : ICardRepository
 
 	public async Task<Card?> GetByIdAsync(int id)
 	{
-		return await _db.Cards.FirstOrDefaultAsync(x => x.Id == id);
+		return await _db.Cards
+			.Include(card => card.Cardimages)
+			.Include(card => card.Cardsets)
+			.FirstOrDefaultAsync(x => x.Id == id);
 	}
 
 	public async Task<Card?> GetCardDetailByIdAsync(int id)

@@ -27,6 +27,8 @@ builder.Services.AddAutoMapper(typeof(ApplicationAssemblyMarker));
 // Repository DI
 builder.Services.AddScoped<ICardRepository, CardRepository>();
 builder.Services.AddScoped<ICardInventoryRepository, CardInventoryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 
 // Controllers
 builder.Services.AddControllers();
